@@ -7,7 +7,7 @@ The documentation provided in this fork only explains the parts that have been c
 ## What is this fork about?
 At [containerlab](https://containerlab.srlinux.dev) we needed to have [a way to run virtual routers](https://containerlab.srlinux.dev/manual/vrnetlab/) alongside the containerized Network Operating Systems.
 
-Vrnetlab provides a perfect machinery to package most-common routing VMs in the container packaging. What upstream vrnetlab doesn't do, though, is creating datapath between the VMs in a "container-native" way.
+Vrnetlab provides a perfect machinery to package most-common routing VMs in the container packaging. What upstream vrnetlab doesn't do, though, is creating datapath between the VMs in a "container-native" way.  
 Vrnetlab relies on a separate VM (vr-xcon) to stich sockets exposed on each container and that doesn't play well with the regular ways of interconnecting container workloads.
 
 This fork adds additional option for `launch.py` script of the supported VMs called `connection-mode`. This option allows to choose the way vrnetlab will create datapath for the launched VMs.
@@ -19,7 +19,7 @@ Yes, the term is bloated, what it actually means is that with the changes we mad
 
 With this you can just add, say, veth pairs between the containers as you would do normally, and vrnetlab will make sure that these ports get mapped to your router' ports. In essence, that allows you to work with your vrnetlab containers like with a normal container and get the datapath working in the same "native" way.
 
-> Although the changes we made here are of a general purpose and you can run vrnetlab routers with docker CLI or any other container runtime, the purpose of this work was to couple vrnetlab with containerlab.
+> Although the changes we made here are of a general purpose and you can run vrnetlab routers with docker CLI or any other container runtime, the purpose of this work was to couple vrnetlab with containerlab.  
 > With this being said, we recommend the readers to start their journey from this [documentation entry](https://containerlab.srlinux.dev/manual/vrnetlab/) which will show you how easy it is to run routers in a containerized setting.
 
 ## Connection modes

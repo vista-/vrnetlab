@@ -25,7 +25,7 @@ Put the .qcow2 file in this directory and run `make docker-image` and
 you should be good to go. The resulting image is called `vrnetlab\vr-csr`. You can tag
 it with something else if you want, like `my-repo.example.com/vr-csr` and then
 push it to your repo. The tag is the same as the version of the CSR image, so
-if you have `csr1000v-universalk9.17.04.03-serial.qcow2` your final docker image will be
+if you have `csr1000v-universalk9.17.04.03-serial.qcow2` your final docker image will be 
 called `vrnetlab\vr-csr:17.07.03`
 
 Please note that you will always need to specify version when starting your
@@ -77,4 +77,4 @@ with a fairly large configuration.
 FUAQ - Frequently or Unfrequently Asked Questions
 -------------------------------------------------
 ##### Q: Has this been extensively tested?
-A: Nope.
+A: Nope. 

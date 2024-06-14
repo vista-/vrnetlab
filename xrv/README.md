@@ -2,7 +2,7 @@
 
 This is the vrnetlab docker image for Cisco IOS XRv.
 
-> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.
+> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.  
 
 There are two flavours of virtual XR routers, XRv and XRv9000 where the latter
 has a much more complete forwarding plane. This is for XRv, if you have the
