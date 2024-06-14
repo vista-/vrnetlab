@@ -11,7 +11,6 @@ import subprocess
 import sys
 import telnetlib
 import time
-from pathlib import Path
 
 MAX_RETRIES = 60
 
