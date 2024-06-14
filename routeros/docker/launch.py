@@ -56,7 +56,11 @@ class ROS_vm(vrnetlab.VM):
         self.qemu_args.extend(["-boot", "n"])
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         self.num_nics = 31
+        self.interface_alias_regexp = r"ether(?P<port>\d+)"
+        # Data interface numbering starts at port 2 (ether2)
+        self.interface_alias_offset = 2
 
         # set up bridge for management interface to a localhost
         self.logger.info("Creating br-mgmt bridge for management interface")

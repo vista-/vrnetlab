@@ -1,7 +1,7 @@
 # vrnetlab / Cisco IOS XRv9k
 This is the vrnetlab docker image for Cisco IOS XRv9k.
 
-> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.  
+> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.
 
 There are two flavours of virtual XR routers, XRv and XRv9k where the latter
 has a much more complete forwarding plane. This is for XRv9k if you have the
@@ -30,9 +30,16 @@ Put the .qcow2 file in this directory and run `make docker-image` and you
 should be good to go. The resulting image is called `vrnetlab/vr-xrv9k`. You can tag it
 with something else if you want, like `my-repo.example.com/vr-xrv` and then
 push it to your repo. The tag is the same as the version of the XRv9k image,
-so if you have xrv9k-fullk9-x.vrr-6.2.1.qcow2 your final docker image will be 
+so if you have xrv9k-fullk9-x.vrr-6.2.1.qcow2 your final docker image will be
 called vr-xrv9k:6.2.1
 
 It's been tested to boot and respond to SSH with:
 
  * xrv9k-fullk9-x-7.2.1.qcow2
+
+The interface alias format supported on this image is `[InterfaceType]0-0-0-X`, where X is the port number. `InterfaceType` can be one of the following:
+
+ * `GigabitEthernet`
+    - Can be shortened to `Gi`
+ * `TenGigabitEthernet`
+    - Can be shortened to `TenGigE` or `Te`

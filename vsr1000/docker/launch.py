@@ -38,6 +38,7 @@ class VSR_vm(vrnetlab.VM):
 
         # The VSR supports up to 15 user nics
         self.num_nics = 7
+        # TODO: Interface aliases
 
     def bootstrap_spin(self):
         """ This function should be called periodically to do work.

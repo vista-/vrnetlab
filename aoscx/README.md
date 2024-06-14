@@ -13,6 +13,8 @@ The image will be tagged with the timestamp present in the vmdk file. Optionally
 docker tag vrnetlab/vr-aoscx:20210610000730 vrnetlab/vr-aoscx:10.07.0010
 ```
 
+The interface alias format supported on this image is `1-1-X`, where X is the port number.
+
 Tested booting and responding to SSH:
 
 * `ArubaOS-CX_10_12_0006.ova` (`arubaoscx-disk-image-genericx86-p4-20230531220439.vmdk`)

@@ -51,7 +51,11 @@ class VEOS_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         self.num_nics = 20
+        self.interface_alias_regexp = r"(?:Et|Ethernet)1-(?P<port>\d+)"
+        # Data interface numbering starts at port 1 (Ethernet1-1)
+        self.interface_alias_offset = 1
 
     def bootstrap_spin(self):
         """This function should be called periodically to do work."""

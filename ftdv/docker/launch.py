@@ -38,7 +38,6 @@ logging.Logger.trace = trace
 
 
 class FTDV_vm(vrnetlab.VM):
-    
     # FIPS check fails without exposing cpu (ERROR: FIPS Self-Test failure,  fipsPostGFSboxKat)
     def __init__(
         self, hostname, username, password, nics, conn_mode, install_mode=False, smp="4,sockets=1,cores=4,threads=1"
@@ -54,10 +53,14 @@ class FTDV_vm(vrnetlab.VM):
         )
 
         self.install_mode = install_mode
-        self.num_nics = nics
         self.hostname = hostname
         self.conn_mode = conn_mode
+
+        self.num_nics = nics
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"(?:Gi|GigabitEthernet)0-(?P<port>\d+)"
+        # Data interface numbering starts at port0 (GigabitEthernet0-0), no offset needed
+
         overlay_disk_image = re.sub(r"(\.[^.]+$)", r"-overlay\1", disk_image)
         # boot harddrive first
         self.qemu_args.extend(["-boot", "order=c"])

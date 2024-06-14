@@ -34,9 +34,13 @@ class VSRX_vm(vrnetlab.VM):
             if re.search(".qcow2$", e):
                 disk_image = "/" + e
         super(VSRX_vm, self).__init__(username, password, disk_image=disk_image, ram=4096, smp="2")
+
         self.nic_type = "virtio-net-pci"
-        self.conn_mode = conn_mode
         self.num_nics = 10
+        self.interface_alias_regexp = r"(?:ge|xe|et)-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (ge-0-0-0), no offset needed
+
+        self.conn_mode = conn_mode
         self.hostname = hostname
 
     def bootstrap_spin(self):
@@ -118,7 +122,7 @@ class VSRX_vm(vrnetlab.VM):
                 #Check to see if the user startup config file starts with a set command or not.
                 if first_line.startswith('set'):
                     self.logger.trace("User startup-config file %s is in Junos set commands" % STARTUP_CONFIG_FILE)
-                    #Write the first line then read the remainder of the file. 
+                    #Write the first line then read the remainder of the file.
                     self.wait_write(first_line, "#")
                     config_lines = file.readlines()
                     config_lines = [line.rstrip() for line in config_lines]

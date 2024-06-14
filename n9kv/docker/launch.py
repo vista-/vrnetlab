@@ -52,9 +52,13 @@ class N9KV_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         # mgmt + 128 that show up in the vm, may as well populate them all in vrnetlab right away
         self.num_nics = 129
         self.nic_type = "e1000"
+        self.interface_alias_regexp = r"(?:Et|Ethernet)1-(?P<port>\d+)"
+        # Data interface numbering starts at port 1 (Ethernet1-1)
+        self.interface_alias_offset = 1
 
         # bios for n9kv
         self.qemu_args.extend(["-bios", "/OVMF.fd"])

@@ -39,10 +39,11 @@ class simulator_VM(vrnetlab.VM):
         self.vcpu = 6
         self.disk_size = '40G'
         super(simulator_VM, self).__init__(username, password, disk_image=disk_image, ram=self.ram, smp=f"{self.vcpu}")
+        self.wait_time = 30
 
         self.num_nics = 14
-        self.wait_time = 30
         self.nic_type = 'virtio-net-pci'
+        # TODO: Interface aliases
 
         vrnetlab.run_command(["qemu-img", "create", "-f", "qcow2", "DataDisk.qcow2", self.disk_size])
 

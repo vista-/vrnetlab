@@ -919,7 +919,7 @@ class SROS_vm(vrnetlab.VM):
         self.uuid = "00000000-0000-0000-0000-000000000000"
         self.power = "dc"  # vSR emulates DC only
         self.read_license()
-        
+
         # override default wait pattern with hash followed by the space
         self.wait_pattern = "# "
 
@@ -1139,13 +1139,13 @@ class SROS_vm(vrnetlab.VM):
         """Ignore environment variables here, since getMem function is used"""
         return self._ram
 
-    
+
     @property
     def cpu(self):
         """Ignore environment variables here, since CPU environment variable is used for number of cpus in getCPU function"""
-    
+
         return str(self._cpu)
-    
+
     @property
     def smp(self):
         """Ignore environment variables here, since CPU environment variable is used for number of cpus in getCPU function"""
@@ -1173,7 +1173,10 @@ class SROS_integrated(SROS_vm):
         )
         self.mode = mode
         self.role = "integrated"
+
         self.num_nics = num_nics
+        # TODO: Interface aliases
+
         self.smbios = [
             f"type=1,product=TIMOS:address={SROS_MGMT_V4_ADDR}/{V4_PREFIX_LENGTH}@active "
             f"address={SROS_MGMT_V6_ADDR}/{V6_PREFIX_LENGTH}@active license-file=tftp://{BRIDGE_V4_ADDR}/"
@@ -1317,8 +1320,10 @@ class SROS_lc(SROS_vm):
 
         self.smbios = ["type=1,product=TIMOS:{}".format(lc_config["timos_line"])]
         self.slot = slot
+
         self.num_nics = num_nics
         self.start_nic_eth_idx = nic_eth_start
+        # TODO: Interface aliases
 
     def start(self):
         # use parent class start() function

@@ -45,8 +45,10 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <con
 
 Interface `vio0` is always configured as a management interface. Interfaces `vio1` to `vio17` can be used for data plane.
 
+The interface alias format supported on this image is `vioX`, where X is the port number, and `X = 0` is reserved for the management interface.
+
 ## System requirements
 
-CPU: 1 core  
-RAM: 512MB  
+CPU: 1 core
+RAM: 512MB
 DISK: 4.0GB

@@ -2,7 +2,7 @@
 
 This is the vrnetlab docker image for Juniper vMX.
 
-> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.  
+> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.
 
 ## Added in this fork
 
@@ -34,6 +34,7 @@ with the following images:
 
 * vmx-bundle-20.2R1.10.tgz
 
+The interface alias format supported on this image is `ge-0-0-X`, where X is the port number. The prefixes `et` and `te` can also be used interchangeably.
 
 ## System requirements
 

@@ -57,10 +57,14 @@ class CSR_vm(vrnetlab.VM):
         super(CSR_vm, self).__init__(username, password, disk_image=disk_image)
 
         self.install_mode = install_mode
-        self.num_nics = nics
         self.hostname = hostname
         self.conn_mode = conn_mode
+
+        self.num_nics = nics
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"(?:Gi|GigabitEthernet)(?P<port>\d+)"
+        # Data interface numbering starts at port 2 (Gi2)
+        self.interface_alias_offset = 2
 
         if self.install_mode:
             self.logger.trace("install mode")

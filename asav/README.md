@@ -41,6 +41,8 @@ Management0/0 is always configured as a management interface.
 | GigabitEthernet0/6  | 7       |
 | GigabitEthernet0/7  | 8       |
 
+The interface alias format supported on this image is `GigabitEthernet0-X`, where X is the port number. `GigabitEthernet` can also be shortened to `Gi`.
+
 System requirements
 -------------------
 CPU: 1 core
@@ -52,4 +54,4 @@ Disk: <500MB
 FUAQ - Frequently or Unfrequently Asked Questions
 -------------------------------------------------
 ##### Q: Has this been extensively tested?
-A: Nope. 
+A: Nope.

@@ -46,8 +46,12 @@ class ASAv_vm(vrnetlab.VM):
             username, password, disk_image=disk_image, ram=2048
         )
         self.nic_type = "e1000"
-        self.install_mode = install_mode
         self.num_nics = 8
+        self.interface_alias_regexp = r"(?:Gi|GigabitEthernet)0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (Gi0-0)
+        self.interface_alias_offset = 0
+
+        self.install_mode = install_mode
 
     def bootstrap_spin(self):
         """This function should be called periodically to do work."""

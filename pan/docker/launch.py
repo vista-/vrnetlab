@@ -53,9 +53,14 @@ class PAN_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         # mgmt + 24 that show up in the vm, may as well populate them all in vrnetlab right away
         self.num_nics = 25
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"Ethernet1-(?P<port>\d+)"
+        # Data interface numbering starts at port 1 (Ethernet1-1)
+        self.interface_alias_offset = 1
+
         # pan wants a uuid it seems (for licensing reasons?!)
         self.uuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 

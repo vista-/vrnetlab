@@ -15,6 +15,8 @@ push it to your repo. The tag is the same as the version of the NXOS image, so
 if you have nxosv-7.2.0.D1.1.qcow2 your final docker image will be called
 vr-nxos:7.2.0.D1.1
 
+The interface alias format supported on this image is `Ethernet1-X`, where X is the port number. `Ethernet` can also be shortened to `Et`.
+
 Usage
 -----
 ```

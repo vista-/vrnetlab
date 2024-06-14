@@ -51,9 +51,10 @@ class OCNOS_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         self.num_nics = 8
         self.nic_type = "virtio-net-pci"
-
+        # TODO: Interface aliases
 
     def bootstrap_spin(self):
         """This function should be called periodically to do work."""

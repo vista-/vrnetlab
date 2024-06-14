@@ -51,8 +51,12 @@ class AOSCX_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         self.num_nics = 20
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"1-1-(?P<port>\d+)"
+        # Data numbering starts at port 1 (1-1-1)
+        self.interface_alias_offset = 1
 
     def bootstrap_spin(self):
         """This function should be called periodically to do work."""

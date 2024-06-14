@@ -42,7 +42,11 @@ class VQFX_vcp(vrnetlab.VM):
         super(VQFX_vcp, self).__init__(
             username, password, disk_image=disk_image, ram=2048
         )
+
         self.num_nics = 12
+        self.interface_alias_regexp = r"(?:ge|xe|et)-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (ge-0-0-0), no offset needed
+
         self.conn_mode = conn_mode
         self.hostname = hostname
         # _version is a custom version dict that has major and minor version components

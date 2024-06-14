@@ -43,10 +43,12 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <con
 
 ## Interface mapping
 
-Interface `vtnet0` is always configured as a management interface. Interfaces `vtnet1` to `vio16` can be used for data plane.
+Interface `vtnet0` is always configured as a management interface. Interfaces `vtnet1` to `vtnet16` can be used for data plane.
+
+The interface alias format supported on this image is `vtnetX`, where X is the port number, and `X = 0` is reserved for the management interface.
 
 ## System requirements
 
-CPU: 1 core  
-RAM: 512MB  
+CPU: 1 core
+RAM: 512MB
 DISK: 4.0GB

@@ -78,6 +78,8 @@ The following images have been verified to NOT exhibit this behavior
 |   Gi10    |    8    |
 |   Gi11    |    9    |
 
+The interface alias format supported on this image is `GigabitEthernetX`, where X is the port number, and `X = 1` is reserved for the management interface. `GigabitEthernet` can also be shortened to `Gi`.
+
 ## System requirements
 
 CPU: 1 core

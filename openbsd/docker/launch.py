@@ -56,10 +56,14 @@ class OpenBSD_vm(vrnetlab.VM):
             username, password, disk_image=disk_image, ram=512
         )
 
-        self.num_nics = nics
         self.hostname = hostname
         self.conn_mode = conn_mode
+
+        self.num_nics = nics
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"vio(?P<port>\d+)"
+        # Data interface numbering starts at port 1 (vio1)
+        self.interface_alias_offset = 1
 
         self.image_name = "cloud_init.iso"
         self.create_boot_image()

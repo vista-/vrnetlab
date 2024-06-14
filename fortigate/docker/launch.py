@@ -52,12 +52,18 @@ class FortiOS_vm(vrnetlab.VM):
         )
         self.conn_mode = conn_mode
         self.hostname = hostname
+
         self.num_nics = 12
         self.nic_type = "virtio-net-pci"
         self.highest_port = 0
+        self.interface_alias_regexp = r"port(?P<port>\d+)"
+        # Data interface numbering starts at port 2 (port2)
+        self.interface_alias_offset = 2
+
         self.qemu_args.extend(["-uuid", str(uuid.uuid4())])
         self.spins = 0
         self.running = None
+
 
         # set up the extra empty disk image
         # for fortigate logs

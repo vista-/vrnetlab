@@ -2,7 +2,7 @@
 
 This is the vrnetlab docker image for Arista vEOS.
 
-> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.  
+> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.
 
 ## Added in this fork
 
@@ -19,7 +19,7 @@ This is the vrnetlab docker image for Arista vEOS.
 Download vEOS in vmdk format from https://www.arista.com/en/support/software-download
 Place the .vmdk file in this directory and run make. The resulting images is called `vrnetlab/vr-veos`. You can
 tag it with something else if you want, like `my-repo.example.com/vr-veos` and
-then push it to your repo. 
+then push it to your repo.
 
 
 It's been tested to boot, respond to SSH and have correct interface mapping
@@ -27,6 +27,7 @@ with the following images:
 
  * vEOS64-lab-4.25.2F
 
+The interface alias format supported on this image is `Ethernet1-X`, where X is the port number. `Ethernet` can also be shortened to `Et`.
 
 ## System requirements
 

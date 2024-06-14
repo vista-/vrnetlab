@@ -11,6 +11,7 @@ Tested booting and responding to SSH:
  * chr-6.47.9.vmdk
  * chr-7.1beta5.vmdk
 
+The interface alias format supported on this image is `etherX`, where X is the port number, and `X = 1` is reserved for the management interface.
 
 ## System requirements
 CPU: 1 core

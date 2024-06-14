@@ -48,7 +48,12 @@ class XRV_vm(vrnetlab.VM):
         super(XRV_vm, self).__init__(username, password, disk_image=disk_image, ram=ram, smp=f"cores={vcpu},threads=1,sockets=1")
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         self.num_nics = nics
+        self.interface_alias_regexp = r"(?:Gi|GigabitEthernet|Te|TenGigE|TenGigabitEthernet)0-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (Gi0-0-0-0)
+        self.interface_alias_offset = 0
+
         self.qemu_args.extend(
             [
                 "-machine",

@@ -52,13 +52,13 @@ class VJUNOSEVOLVED_vm(vrnetlab.VM):
         # create SHA-512 hash of the password
         password_hash = crypt.crypt("admin@123", crypt.mksalt(crypt.METHOD_SHA512))
 
-        # read init.conf configuration file to replace hostname placehodler 
+        # read init.conf configuration file to replace hostname placehodler
         # with given hostname
         with open("init.conf", "r") as file:
             cfg = file.read()
 
         # replace HOSTNAME file var with nodes given hostname
-        # replace CRYPT_PSWD file var with nodes given password 
+        # replace CRYPT_PSWD file var with nodes given password
         # (Evo does not accept plaintext passwords in config)
         new_cfg = cfg.replace("{HOSTNAME}", hostname).replace("{CRYPT_PSWD}", password_hash)
 
@@ -86,15 +86,19 @@ class VJUNOSEVOLVED_vm(vrnetlab.VM):
         ])
 
         self.qemu_args.extend(["-no-user-config", "-nodefaults", "-boot", "strict=on"])
+
         self.nic_type = "virtio-net-pci"
         self.num_nics = 17
+        self.interface_alias_regexp = r"(?:ge|xe|et)-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (ge-0-0-0), no offset needed
+
         self.hostname = hostname
         self.smbios = [
             "type=0,vendor=Bochs,version=Bochs", "type=3,manufacturer=Bochs", "type=1,manufacturer=Bochs,product=Bochs,serial=chassis_no=0:slot=0:type=1:assembly_id=0x0D20:platform=251:master=0:channelized=no"            ]
         self.conn_mode = conn_mode
 
     def startup_config(self):
-        """Load additional config provided by user and append initial 
+        """Load additional config provided by user and append initial
         configurations set by vrnetlab."""
         # if startup cfg DNE
         if not os.path.exists(STARTUP_CONFIG_FILE):

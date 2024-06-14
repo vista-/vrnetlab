@@ -50,8 +50,12 @@ class XRV_vm(vrnetlab.VM):
         )
         self.hostname = hostname
         self.conn_mode = conn_mode
-        self.num_nics = 128
         self.credentials = [["admin", "admin"]]
+
+        self.num_nics = 128
+        self.interface_alias_regexp = r"(?:Gi|GigabitEthernet)0-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (Gi0-0-0-0)
+        self.interface_alias_offset = 0
 
         self.xr_ready = False
 

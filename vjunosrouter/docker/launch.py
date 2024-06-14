@@ -86,8 +86,12 @@ class VJUNOSROUTER_vm(vrnetlab.VM):
         self.qemu_args.extend(
             ["-display", "none", "-no-user-config", "-nodefaults", "-boot", "strict=on"]
         )
+
         self.nic_type = "virtio-net-pci"
         self.num_nics = 11
+        self.interface_alias_regexp = r"(?:ge|xe|et)-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (ge-0-0-0), no offset needed
+
         self.smbios = ["type=1,product=VM-VMX,family=lab"]
         self.qemu_args.extend(["-machine", "pc,usb=off,dump-guest-core=off,accel=kvm"])
         self.qemu_args.extend(

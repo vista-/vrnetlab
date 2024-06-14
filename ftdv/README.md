@@ -13,6 +13,8 @@ with the following images:
 
 * Cisco_Secure_Firewall_Threat_Defense_Virtual-7.2.5-208.qcow2
 
+The interface alias format supported on this image is `GigabitEthernet0-X`, where X is the port number. `GigabitEthernet` can also be shortened to `Gi`.
+
 ## Usage
 
 ```
@@ -41,6 +43,6 @@ docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <con
 
 ## System requirements
 
-CPU: 4 core  
-RAM: 8GB  
-Disk: 4.6GB (Thin Provision disk size is 48.24GB)  
+CPU: 4 core
+RAM: 8GB
+Disk: 4.6GB (Thin Provision disk size is 48.24GB)

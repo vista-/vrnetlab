@@ -257,9 +257,12 @@ class VMX_vfpc(vrnetlab.VM):
     def __init__(self, version, conn_mode):
         super(VMX_vfpc, self).__init__(None, None, disk_image="/vmx/vfpc.img", num=1, cpu="SandyBridge", smp="3")
         self.junos_version = version
-        self.num_nics = 96
 
+        self.num_nics = 96
         self.nic_type = "virtio-net-pci"
+        self.interface_alias_regexp = r"(?:ge|xe|et)-0-0-(?P<port>\d+)"
+        # Data interface numbering starts at port 0 (ge-0-0-0), no offset needed
+
         self.qemu_args.extend(["-M", "pc"])
         # add metadata image if it exists
         if os.path.exists("/vmx/metadata-usb-fpc0.img"):

@@ -52,11 +52,13 @@ class FTOS_vm(vrnetlab.VM):
         self.credentials = [["admin", "admin"]]
         self.hostname = hostname
         self.conn_mode = conn_mode
+
         # mgmt + 56 (S5248 platform) that show up in the vm, may as well populate them all in vrnetlab right away
         # max interface numbers depend on the qemu disk image of platform used.
         # available OS10 virtualization platform options: S4000,S4128,S5212,S5224,S5248,S6000,S6010
         self.num_nics = 56
         self.nic_type = "e1000"
+        # TODO: Interface aliases
 
         overlay_disk_image = re.sub(r"(\.[^.]+$)", r"-overlay\1", disk_image)
         # boot harddrive first

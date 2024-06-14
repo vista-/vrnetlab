@@ -25,6 +25,8 @@ your final docker image will be called vr-openwrt:15.05.
 As per OpenWRT defaults, `br-lan`(`eth0`) is the LAN interface and `eth1` the
 WAN interface.
 
+The interface alias format supported on this image is `wan`.
+
 Tested booting and responding to SSH:
 * openwrt-23.05.3-x86-64-generic-ext4-combined.img 818f6ba04103915ad53f2d003c42aa84
 * openwrt-15.05.1-x86-64-combined-ext4.img   MD5:307d8cdb11faeb1b5e27fe55078bd152

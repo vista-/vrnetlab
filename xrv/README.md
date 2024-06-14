@@ -2,7 +2,7 @@
 
 This is the vrnetlab docker image for Cisco IOS XRv.
 
-> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.  
+> Originally developed by Kristian Larsson (@plajjan), adapted by @hellt to be integrated with [containerlab](https://containerlab.srlinux.dev) networking.
 
 There are two flavours of virtual XR routers, XRv and XRv9000 where the latter
 has a much more complete forwarding plane. This is for XRv, if you have the
@@ -27,3 +27,5 @@ Obtain XRv vmkd image and put the .vmdk file in this directory and run `make doc
 push it to your repo. The tag is the same as the version of the XRv image, so if you have iosxrv-k9-demo.vmdk-5.3.3 your final docker image will be called `vrnetlab/vr-xrv:5.3.3`
 
  * 6.1.2
+
+The interface alias format supported on this image is `GigabitEthernet0-0-0-X`, where X is the port number. `GigabitEthernet` can also be shortened to `Gi`.

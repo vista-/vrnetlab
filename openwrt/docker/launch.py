@@ -34,12 +34,19 @@ class OpenWRT_vm(vrnetlab.VM):
             if re.search(".img$", e):
                 disk_image = "/" + e
         super(OpenWRT_vm, self).__init__(username, password, disk_image=disk_image, ram=128)
-        self.nic_type = "virtio-net-pci"
-        self.num_nics = 1
         self.conn_mode=conn_mode
         self.hostname=hostname
         self.lan_ip=lan_ip
         self.lan_netmask=lan_netmask
+
+        self.nic_type = "virtio-net-pci"
+        self.num_nics = 1
+        self.interface_alias_regexp = r"wan"
+        # Data interface numbering offset does not apply
+
+    def calculate_interface_offset(self, intf):
+        """ Always return 1, since only a single wan interface is provisioned. """
+        return 1
 
     def bootstrap_spin(self):
         """ This function should be called periodically to do work.
@@ -126,7 +133,7 @@ def args(tracing,username,password,connection_mode,hostname,lan_ip,lan_netmask):
         logger.setLevel(logging.DEBUG)
         if tracing:
             logger.setLevel(1)
-        
+
         vr = OpenWRT(username, password, connection_mode, hostname, lan_ip, lan_netmask)
         vr.start()
 
@@ -143,10 +150,3 @@ if __name__ == '__main__':
     #     help="Connection mode to use in the datapath",
     # )
     # args = parser.parse_args()
-    
-
-
-    
-
-    
-
