@@ -267,7 +267,9 @@ class VM:
             pass
 
     def translate_interface_alias(self, interface_name):
-        """ Translate between aliased and "eth" interface names. Returns the interface name if not in the mapping. """
+        """ Translate between aliased and "eth" interface names.
+        Returns the translated interface name, or the interface name if not in mapping.
+        """
         for alias_name, eth_name in self._interface_alias_map_generated.items():
             if interface_name == alias_name:
                 return eth_name
@@ -277,21 +279,30 @@ class VM:
         return interface_name
 
     def calculate_interface_offset(self, intf):
-        """ Calculate "eth" interface index offset based on the aliased interface name"""
+        """Calculate "eth" interface index offset based on the aliased interface name.
+        Returns the integer index of the resulting "eth" port. 
+        """
         match = re.match(self.interface_alias_regexp, intf, re.IGNORECASE)
         idx = int(match.group("port")) + self.start_nic_eth_idx - self.interface_alias_offset
         return idx
 
     def generate_interface_alias_mapping(self):
-        """ Creates interface alias mapping between "eth" and aliased (actual) interface names after performing a modified natural sort on them. """
-        valid_interfaces = [x for x in os.listdir("/sys/class/net/") if re.match(self.interface_alias_regexp, x, re.IGNORECASE)]
+        """
+        Create interface alias mapping between "eth" and aliased (actual) interface names after performing a modified natural sort on them.
+        """
+        valid_interfaces = [
+            x for x in os.listdir("/sys/class/net/")
+            if re.match(self.interface_alias_regexp, x, re.IGNORECASE)
+            ]
         valid_interfaces.sort(key=natural_sort_notext_key)
 
         for intf in valid_interfaces:
             self._interface_alias_map_generated[intf] = f"eth{self.calculate_interface_offset(intf)}"
 
     def create_interface_aliases(self):
-        """ Adds "eth" altnames to aliased interfaces. You can refer to an interface using an altname as if it was an actual existing interface. """
+        """Add "eth" altnames to aliased interfaces.
+        You can refer to an interface using an altname as if it was an actual existing interface.
+        """
         for alias_name, eth_name in self._interface_alias_map_generated.items():
             run_command(["ip", "link", "property", "add", "dev", alias_name, "altname", eth_name])
 
@@ -514,7 +525,10 @@ class VM:
 
         while True:
             # we can't use get_eth_data_interfaces as the mapping is not generated yet
-            provisioned_nics = [x for x in os.listdir("/sys/class/net/") if "eth" in x or re.match(self.interface_alias_regexp, x, re.IGNORECASE)]
+            provisioned_nics = [
+                x for x in os.listdir("/sys/class/net/")
+                if re.match(r"^eth\d+$", x) or re.match(self.interface_alias_regexp, x, re.IGNORECASE)
+                ]
             # if we see num provisioned +1 (for mgmt) we have all nics ready to roll!
             if len(provisioned_nics) >= self.num_provisioned_nics + 1:
                 if self.interface_alias_regexp:
