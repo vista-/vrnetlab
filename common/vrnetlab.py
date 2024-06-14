@@ -32,6 +32,9 @@ def gen_mac(last_octet=None):
 def natural_sort_key(s, _nsre=re.compile("([0-9]+)")):
     return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
 
+# Natural sort with a twist: it ignores text. Useful for dealing w/ different interface prefixes
+def natural_sort_notext_key(s, _nsre=re.compile("([0-9]+)")):
+    return [int(text) if text.isdigit() else "" for text in _nsre.split(s)]
 
 def run_command(cmd, cwd=None, background=False, shell=False):
     res = None
@@ -53,7 +56,6 @@ def boot_delay():
     if delay and (delay != "" or delay != 0):
         logging.getLogger().info(f"Delaying VM boot of by {delay} seconds")
         time.sleep(int(delay))
-
 
 class VM:
     def __str__(self):
@@ -107,6 +109,11 @@ class VM:
         # "highest" provisioned nic num -- used for making sure we can allocate nics without needing
         # to have them allocated sequential from eth1
         self.highest_provisioned_nic_num = 0
+
+        # interface aliases
+        self.interface_alias_regexp = None
+        self.interface_alias_offset = 0
+        self._interface_alias_map_generated = {}
 
         # we setup pci bus by default
         self.provision_pci_bus = provision_pci_bus
@@ -259,6 +266,47 @@ class VM:
         except:
             pass
 
+    def translate_interface_alias(self, interface_name):
+        """ Translate between aliased and "eth" interface names. Returns the interface name if not in the mapping. """
+        for alias_name, eth_name in self._interface_alias_map_generated.items():
+            if interface_name == alias_name:
+                return eth_name
+            if interface_name == eth_name:
+                return alias_name
+
+        return interface_name
+
+    def calculate_interface_offset(self, intf):
+        """ Calculate "eth" interface index offset based on the aliased interface name"""
+        match = re.match(self.interface_alias_regexp, intf, re.IGNORECASE)
+        idx = int(match.group("port")) + self.start_nic_eth_idx - self.interface_alias_offset
+        return idx
+
+    def generate_interface_alias_mapping(self):
+        """ Creates interface alias mapping between "eth" and aliased (actual) interface names after performing a modified natural sort on them. """
+        valid_interfaces = [x for x in os.listdir("/sys/class/net/") if re.match(self.interface_alias_regexp, x, re.IGNORECASE)]
+        valid_interfaces.sort(key=natural_sort_notext_key)
+
+        for intf in valid_interfaces:
+            self._interface_alias_map_generated[intf] = f"eth{self.calculate_interface_offset(intf)}"
+
+    def create_interface_aliases(self):
+        """ Adds "eth" altnames to aliased interfaces. You can refer to an interface using an altname as if it was an actual existing interface. """
+        for alias_name, eth_name in self._interface_alias_map_generated.items():
+            run_command(["ip", "link", "property", "add", "dev", alias_name, "altname", eth_name])
+
+    def get_eth_data_interfaces(self):
+        # Skip eth0 management port
+        all_data_ports = [x for x in os.listdir("/sys/class/net/") if x != "eth0"]
+        eth_data_ports = []
+        for port in all_data_ports:
+            if re.match(r"^eth\d+$", port):
+                eth_data_ports.append(port)
+            if port in self._interface_alias_map_generated:
+                eth_data_ports.append(self._interface_alias_map_generated[port])
+
+        return eth_data_ports
+
     def create_bridges(self):
         """Create a linux bridge for every attached eth interface
         Returns list of bridge names
@@ -268,7 +316,7 @@ class VM:
         run_command(["echo 'allow all' > /etc/qemu/bridge.conf"], shell=True)
 
         bridges = list()
-        intfs = [x for x in os.listdir("/sys/class/net/") if "eth" in x if x != "eth0"]
+        intfs = self.get_eth_data_interfaces()
         intfs.sort(key=natural_sort_key)
 
         self.logger.info("Creating bridges for interfaces: %s" % intfs)
@@ -317,7 +365,7 @@ class VM:
         time.sleep(3)
 
         bridges = list()
-        intfs = [x for x in os.listdir("/sys/class/net/") if "eth" in x if x != "eth0"]
+        intfs = self.get_eth_data_interfaces()
         intfs.sort(key=natural_sort_key)
 
         self.logger.info("Creating ovs bridges for interfaces: %s" % intfs)
@@ -399,8 +447,7 @@ class VM:
         """
         Create Macvtap interfaces for each non dataplane interface
         """
-        intfs = [x for x in os.listdir("/sys/class/net/") if "eth" in x if x != "eth0"]
-        self.data_ifaces = intfs
+        intfs = self.get_eth_data_interfaces()
         intfs.sort(key=natural_sort_key)
 
         for idx, intf in enumerate(intfs):
@@ -465,14 +512,16 @@ class VM:
         start_eth = self.start_nic_eth_idx
         end_eth = self.start_nic_eth_idx + self.num_nics
 
-        inf_path = Path("/sys/class/net/")
         while True:
-            provisioned_nics = list(inf_path.glob("eth*"))
+            # we can't use get_eth_data_interfaces as the mapping is not generated yet
+            provisioned_nics = [x for x in os.listdir("/sys/class/net/") if "eth" in x or re.match(self.interface_alias_regexp, x, re.IGNORECASE)]
             # if we see num provisioned +1 (for mgmt) we have all nics ready to roll!
             if len(provisioned_nics) >= self.num_provisioned_nics + 1:
+                if self.interface_alias_regexp:
+                    self.generate_interface_alias_mapping()
                 nics = [
-                    int(re.search(pattern=r"\d+", string=nic.name).group())
-                    for nic in provisioned_nics
+                    int(re.search(pattern=r"\d+", string=nic).group())
+                    for nic in self.get_eth_data_interfaces()
                 ]
 
                 # Ensure the max eth is in range of allocated eth index of VM LC
@@ -491,6 +540,7 @@ class VM:
     def gen_nics(self):
         """Generate qemu args for the normal traffic carrying interface(s)"""
         self.nic_provision_delay()
+        self.create_interface_aliases()
 
         res = []
         bridges = []
@@ -534,8 +584,10 @@ class VM:
             pci_bus = math.floor(x / self.nics_per_pci_bus) + 1
             addr = (x % self.nics_per_pci_bus) + 1
 
-            # if the matching container interface ethX doesn't exist, we don't create a nic
-            if not os.path.exists(f"/sys/class/net/eth{i}"):
+            # if the matching container interface doesn't exist, we don't create a nic
+            # if the alias doesn't exist, this function just returns the original eth interface name
+            nic_name = self.translate_interface_alias(f"eth{i}")
+            if not os.path.exists(f"/sys/class/net/{nic_name}"):
                 if i >= self.highest_provisioned_nic_num:
                     continue
 

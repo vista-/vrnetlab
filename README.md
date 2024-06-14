@@ -7,7 +7,7 @@ The documentation provided in this fork only explains the parts that have been c
 ## What is this fork about?
 At [containerlab](https://containerlab.srlinux.dev) we needed to have [a way to run virtual routers](https://containerlab.srlinux.dev/manual/vrnetlab/) alongside the containerized Network Operating Systems.
 
-Vrnetlab provides a perfect machinery to package most-common routing VMs in the container packaging. What upstream vrnetlab doesn't do, though, is creating datapath between the VMs in a "container-native" way.  
+Vrnetlab provides a perfect machinery to package most-common routing VMs in the container packaging. What upstream vrnetlab doesn't do, though, is creating datapath between the VMs in a "container-native" way.
 Vrnetlab relies on a separate VM (vr-xcon) to stich sockets exposed on each container and that doesn't play well with the regular ways of interconnecting container workloads.
 
 This fork adds additional option for `launch.py` script of the supported VMs called `connection-mode`. This option allows to choose the way vrnetlab will create datapath for the launched VMs.
@@ -19,13 +19,15 @@ Yes, the term is bloated, what it actually means is that with the changes we mad
 
 With this you can just add, say, veth pairs between the containers as you would do normally, and vrnetlab will make sure that these ports get mapped to your router' ports. In essence, that allows you to work with your vrnetlab containers like with a normal container and get the datapath working in the same "native" way.
 
-> Although the changes we made here are of a general purpose and you can run vrnetlab routers with docker CLI or any other container runtime, the purpose of this work was to couple vrnetlab with containerlab.  
+> Although the changes we made here are of a general purpose and you can run vrnetlab routers with docker CLI or any other container runtime, the purpose of this work was to couple vrnetlab with containerlab.
 > With this being said, we recommend the readers to start their journey from this [documentation entry](https://containerlab.srlinux.dev/manual/vrnetlab/) which will show you how easy it is to run routers in a containerized setting.
 
 ## Connection modes
 As mentioned above, the major change this fork brings is the ability to run vrnetlab containers without requiring vr-xcon and by using container-native networking.
 
 The default option that we use in containerlab for this setting is `connection-mode=tc`. With this particular mode we use tc-mirred redirects to stitch container's interfaces `eth1+` with the ports of the qemu VM running inside.
+
+vrnetlab also recognizes interface aliases, which, to the limitations of the Linux kernel and the definition found in each supported virtual appliance's definition, allows for the usage of matching interface names on the container side. One important limitation is the inability to use forward slash `/` (substituted with `-`) and whitespace (omitted) characters in container interface names (e.g. `GigabitEthernet 0/1` becomes `GigabitEthernet0-1`). For ease of use, interface aliases are handled case-insensitive by vrnetlab.
 
 ![tc](https://gitlab.com/rdodin/pics/-/wikis/uploads/4d31c06e6258e70edc887b17e0e758e0/image.png)
 
