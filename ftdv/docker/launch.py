@@ -73,7 +73,7 @@ class FTDV_vm(vrnetlab.VM):
             ]
         )
         if self.install_mode:
-            logger.trace("install mode")
+            self.logger.trace("install mode")
             self.image_name = "day0.iso"
             self.create_boot_image()
             # mount config disk with day0-config base config

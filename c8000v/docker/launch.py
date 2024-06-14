@@ -49,7 +49,7 @@ class C8000v_vm(vrnetlab.VM):
 
         self.license = False
         if os.path.isfile("/tftpboot/license.lic"):
-            logger.info("License found")
+            self.logger.info("License found")
             self.license = True
 
         super().__init__(username, password, disk_image=disk_image, ram=4096)
@@ -60,7 +60,7 @@ class C8000v_vm(vrnetlab.VM):
         self.nic_type = "virtio-net-pci"
 
         if self.install_mode:
-            logger.trace("install mode")
+            self.logger.trace("install mode")
             self.image_name = "config.iso"
             self.create_boot_image()
 
@@ -134,7 +134,7 @@ class C8000v_vm(vrnetlab.VM):
                     self.running = True
                     return
                 else:
-                    self.log.warning("Unexpected reload while running")
+                    self.logger.warning("Unexpected reload while running")
 
         # no match, if we saw some output from the router it's probably
         # booting, so let's give it some more time

@@ -51,7 +51,7 @@ class CSR_vm(vrnetlab.VM):
 
         self.license = False
         if os.path.isfile("/tftpboot/license.lic"):
-            logger.info("License found")
+            self.logger.info("License found")
             self.license = True
 
         super(CSR_vm, self).__init__(username, password, disk_image=disk_image)
@@ -63,7 +63,7 @@ class CSR_vm(vrnetlab.VM):
         self.nic_type = "virtio-net-pci"
 
         if self.install_mode:
-            logger.trace("install mode")
+            self.logger.trace("install mode")
             self.image_name = "config.iso"
             self.create_boot_image()
 
