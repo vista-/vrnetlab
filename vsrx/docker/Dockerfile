@@ -1,16 +1,16 @@
 FROM public.ecr.aws/docker/library/debian:bookworm-slim
-LABEL org.opencontainers.image.authors="roman@dodin.dev"
+LABEL org.opencontainers.image.authors="roman@dodin.dev,vista@birb.network"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qy \
-   && apt-get install -y \
+   && apt-get install --no-install-recommends -y \
    bridge-utils \
    iproute2 \
    python3-ipy \
    socat \
-   qemu-system-x86=1:5.2+dfsg-11+deb11u2 \
-   qemu-utils=1:5.2+dfsg-11+deb11u2 \
+   qemu-kvm \
+   qemu-utils \
    genisoimage \
    && rm -rf /var/lib/apt/lists/*
 
@@ -18,7 +18,7 @@ ARG IMAGE
 COPY $IMAGE* /
 
 COPY init.conf /
-COPY make-config.sh /
+COPY make-config-iso.sh /
 COPY *.py /
 
 EXPOSE 22 161/udp 830 5000 10000-10099
