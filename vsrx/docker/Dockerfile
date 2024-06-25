@@ -1,10 +1,9 @@
-FROM debian:bullseye
+FROM public.ecr.aws/docker/library/debian:bookworm-slim
 LABEL org.opencontainers.image.authors="roman@dodin.dev"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qy \
-   && apt-get upgrade -qy \
    && apt-get install -y \
    bridge-utils \
    iproute2 \
