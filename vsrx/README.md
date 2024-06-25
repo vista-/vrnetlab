@@ -1,13 +1,13 @@
-\# vrnetlab / Juniper vSRX
+# Juniper vSRX
 
 This is the vrnetlab docker image for Juniper's vSRX.
 Both "classic" vSRX 2.0 and the new vSRX 3.0 images are compatible with this vrnetlab kind.
 
-> Available with [containerlab](https://containerlab.dev) as juniper_vsrx.
+> Available with [containerlab](https://containerlab.dev) as `juniper_vsrx` kind.
 
 ## Building the docker image
 
-Download the vSRX 3.0 trial .qcow2 image from  <https://support.juniper.net/support/downloads/?p=vsrx-evaluation>
+Download the vSRX 3.0 trial `.qcow2` image from https://support.juniper.net/support/downloads/?p=vsrx-evaluation
 and place it in this directory. A Juniper account is required to download the evaluation image.
 
 After typing `make`, a new image will appear called `vrnetlab/vjunosevolved`.
