@@ -10,7 +10,6 @@ RUN apt-get update && \
     curl \
     ca-certificates \
     gnupg \
-    supervisor \
     && apt-get clean
 
 # Add the GNS3 PPA for IOUYAP
@@ -22,31 +21,17 @@ RUN curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xb83aaabf
 RUN apt-get update && \
     apt-get install -y iouyap
 
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Set working directory
-WORKDIR /opt/iol
+WORKDIR /iol
 
 # Add the IOL image and config files
-COPY *.bin /opt/iol/iol.bin
-COPY config.txt /opt/iol/config.txt
-
-# Copy the supervisor file
-COPY supervisord.conf /etc/supervisord.conf
-
-# Copy the iourc file.
-COPY .iour[c] /opt/iol/.iourc
-
-# Copy the start-iol.sh script
-COPY start-iol.sh /opt/iol/start-iol.sh
+COPY *.bin /iol/iol.bin
 
 # Make the IOL image and script executable
-RUN chmod +x /opt/iol/iol.bin
-RUN chmod +x /opt/iol/start-iol.sh
+RUN chmod +x /iol/iol.bin
 
-# Copy the entrypoint script
-COPY entrypoint.sh /opt/iol/entrypoint.sh
-
-# Make the entrypoint script executable
-RUN chmod +x /opt/iol/entrypoint.sh
-
-# Set the entrypoint
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -15,7 +15,7 @@ docker-image:
 endif
 
 docker-clean-build:
-	-rm -f docker/*.qcow2* docker/*.tgz* docker/*.vmdk* docker/*.iso docker/*.xml docker/*.bin docker/.iourc
+	-rm -f docker/*.qcow2* docker/*.tgz* docker/*.vmdk* docker/*.iso docker/*.xml docker/*.bin
 
 docker-pre-build: ;
 
@@ -32,7 +32,6 @@ else
 	cp ../common/* docker/
 endif
 	@[ -f ./vswitch.xml ] && cp vswitch.xml docker/ || true
-	@[ -f ./.iourc ] && cp .iourc docker/ || true
 	$(MAKE) IMAGE=$$IMAGE docker-build-image-copy
 	(cd docker; docker build --build-arg http_proxy=$(http_proxy) --build-arg HTTP_PROXY=$(HTTP_PROXY) --build-arg https_proxy=$(https_proxy) --build-arg HTTPS_PROXY=$(HTTPS_PROXY) --build-arg IMAGE=$(IMAGE) --build-arg VERSION=$(VERSION) --label "vrnetlab-version=$(VRNETLAB_VERION)" -t $(REGISTRY)$(IMG_VENDOR)_$(IMG_NAME):$(VERSION) .)
 
