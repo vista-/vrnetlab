@@ -8,7 +8,7 @@ Ask your Nokia representative for the VSR/VSIM image.
 Copy the `sros-vm.qcow2` file in `vrnetlab/sros` directory and rename the file by appending the SR OS version to it.  
 For example, for SR OS version 20.10.r1 make sure that the qcow2 file will be named as `sros-vm-20.10.R1.qcow2`. The version (20.10.R1) will be used as a container image tag.
 
-Run `make docker-image` to start the build process. The resulting image is called `vrnetlab/vr-sros:<version>`. You can tag it with something else if needed, like `vr-sros:<version>`.
+Run `make docker-image` to start the build process. The resulting image is called `vrnetlab/nokia_sros:<version>`. You can tag it with something else if needed, like `nokia_sros:<version>`.
 
 It's been tested to run with the following versions:
 
@@ -104,6 +104,7 @@ r01/
     ├── config.txt
     └── license.txt
 ```
+
 NOTE: If only CF2 is provisioned, node will remap it to CF1.
 
 ## Usage with containerlab
