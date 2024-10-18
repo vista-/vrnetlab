@@ -308,6 +308,27 @@ class VM:
             f.write(ifup_script)
         os.chmod("/etc/tc-tap-ifup", 0o777)
 
+    def create_tc_tap_mgmt_ifup(self):
+        """Create tap ifup script that is used in tc datapath mode, specifically for the management interface"""
+        ifup_script = """#!/bin/bash
+
+        ip link set tap0 up
+        ip link set tap0 mtu 65000
+
+        # create tc eth<->tap redirect rules
+        tc qdisc add dev eth0 ingress
+        # add exception rules for ports 5000-5007 (mask everything but last 3 bits with 0xFFF8)
+        tc filter add dev eth0 parent ffff: protocol tcp u32 match ip dport 5000 0xfff8 action pass
+        tc filter add dev eth0 parent ffff: protocol all u32 match u8 0 0 action mirred egress redirect dev tap0
+
+        tc qdisc add dev tap0 ingress
+        tc filter add dev tap0 parent ffff: protocol all u32 match u8 0 0 action mirred egress redirect dev tap0
+        """
+
+        with open("/etc/tc-tap-mgmt-ifup", "w") as f:
+            f.write(ifup_script)
+        os.chmod("/etc/tc-tap-mgmt-ifup", 0o777)
+
     def gen_mgmt(self):
         """Generate qemu args for the mgmt interface(s)"""
         res = []
@@ -323,7 +344,7 @@ class VM:
             # mgmt interface is passthrough - we just create a normal mirred tap interface
             if self.conn_mode == "tc":
                 res.append("-netdev")
-                res.append("tap,id=p00,ifname=tap0,script=/etc/tc-tap-ifup,downscript=no")
+                res.append("tap,id=p00,ifname=tap0,script=/etc/tc-tap-mgmt-ifup,downscript=no")
         else:
             # mgmt interface is special - we use qemu user mode network
             res.append("-netdev")
@@ -454,6 +475,7 @@ class VM:
 
         if self.conn_mode == "tc":
             self.create_tc_tap_ifup()
+            self.create_tc_tap_mgmt_ifup()
 
         start_eth = self.start_nic_eth_idx
         end_eth = self.start_nic_eth_idx + self.num_nics
