@@ -344,22 +344,29 @@ class VM:
         return res
 
     def get_mgmt_address_ipv4(self):
-        """ Returns the IPv4 address of the eth0 interface of the container
-            $ ip -4 --brief address show dev eth0
-            eth0@if958       UP             172.20.20.3/24
-                                            ^
-        """
-        stdout, _ = run_command(["ip -4 --brief address show dev eth0 | awk '{print $3}'"], shell=True)
-        return stdout.decode('utf-8')
+        """ Returns the IPv4 address of the eth0 interface of the container"""
+        stdout, _ = run_command(["ip", "--json", "-4", "address", "show", "dev", "eth0"])
+        command_json = json.loads(stdout.decode('utf-8'))
+        try:
+            intf_addrinfo = command_json[0]['addr_info'][0]
+        except IndexError as e:
+            raise IndexError("No IP set on management interface eth0!") from e
+        mgmt_address = intf_addrinfo['local']
+        mgmt_prefixlen = intf_addrinfo['prefixlen']
+        mgmt_cidr = mgmt_address + '/' + str(mgmt_prefixlen)
+
+        return mgmt_cidr
 
     def get_mgmt_gw_ipv4(self):
-        """ Returns the IPv4 default gateway of the container, used for generating the management default route
-            $ ip -4 route show default
-            default via 172.20.20.1 dev eth0
-                        ^
-        """
-        stdout, _ = run_command(["ip -4 route show default | awk '{print $3}'"], shell=True)
-        return stdout.decode('utf-8')
+        """ Returns the IPv4 default gateway of the container, used for generating the management default route"""
+        stdout, _ = run_command(["ip", "--json", "-4", "route", "show", "default"])
+        command_json = json.loads(stdout.decode('utf-8'))
+        try:
+            mgmt_gw = command_json[0]['gateway']
+        except IndexError as e:
+            raise IndexError("No default gateway route on management interface eth0!") from e
+
+        return mgmt_gw
 
     def nic_provision_delay(self) -> None:
         self.logger.debug(
