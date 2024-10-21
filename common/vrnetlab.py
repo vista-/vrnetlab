@@ -317,12 +317,10 @@ class VM:
 
         # create tc eth<->tap redirect rules
         tc qdisc add dev eth0 ingress
-        # add exception rules for ports 5000-5007 (mask everything but last 3 bits with 0xFFF8)
-        tc filter add dev eth0 parent ffff: protocol tcp u32 match ip dport 5000 0xfff8 action pass
         tc filter add dev eth0 parent ffff: protocol all u32 match u8 0 0 action mirred egress redirect dev tap0
 
         tc qdisc add dev tap0 ingress
-        tc filter add dev tap0 parent ffff: protocol all u32 match u8 0 0 action mirred egress redirect dev tap0
+        tc filter add dev tap0 parent ffff: protocol all u32 match u8 0 0 action mirred egress redirect dev eth0
         """
 
         with open("/etc/tc-tap-mgmt-ifup", "w") as f:
