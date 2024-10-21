@@ -316,12 +316,24 @@ class VM:
         ip link set tap0 mtu 65000
 
         # create tc eth<->tap redirect rules
+
         tc qdisc add dev eth0 clsact
-        tc filter add dev eth0 ingress flower action mirred egress redirect dev tap0
+        # exception for TCP ports 5000-5007
+        tc filter add dev eth0 ingress prio 1 protocol ip flower ip_proto tcp dst_port 5000-5007 action pass
+        # mirror ARP traffic to container
+        tc filter add dev eth0 ingress prio 2 protocol arp flower action mirred egress mirror dev tap0
+        # redirect rest of ingress traffic of eth0 to egress of tap0
+        tc filter add dev eth0 ingress prio 3 flower action mirred egress redirect dev tap0
 
         tc qdisc add dev tap0 clsact
+        # redirect all ingress traffic of tap0 to egress of eth0
         tc filter add dev tap0 ingress flower action mirred egress redirect dev eth0
+
+        # clone management MAC of the VM
+        ip link set dev eth0 address {MGMT_MAC}
         """
+
+        ifup_script = ifup_script.replace("{MGMT_MAC}", self.mgmt_mac)
 
         with open("/etc/tc-tap-mgmt-ifup", "w") as f:
             f.write(ifup_script)
@@ -336,13 +348,15 @@ class VM:
             if getattr(self, "_static_mgmt_mac", False)
             else gen_mac(0)
         )
-        res.append(self.nic_type + f",netdev=p00,mac={mac}")
+        self.mgmt_mac = mac
+        res.append(self.nic_type + f",netdev=p00,mac={self.mgmt_mac}")
 
         if self.mgmt_nic_passthrough:
             # mgmt interface is passthrough - we just create a normal mirred tap interface
             if self.conn_mode == "tc":
                 res.append("-netdev")
                 res.append("tap,id=p00,ifname=tap0,script=/etc/tc-tap-mgmt-ifup,downscript=no")
+                self.create_tc_tap_mgmt_ifup()
         else:
             # mgmt interface is special - we use qemu user mode network
             res.append("-netdev")
@@ -473,7 +487,6 @@ class VM:
 
         if self.conn_mode == "tc":
             self.create_tc_tap_ifup()
-            self.create_tc_tap_mgmt_ifup()
 
         start_eth = self.start_nic_eth_idx
         end_eth = self.start_nic_eth_idx + self.num_nics

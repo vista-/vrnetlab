@@ -43,7 +43,7 @@ Other connection mode values are:
 
 There are two types of management connectivity for NOS VMs: _pass-through_ and _host-forwarded_ (legacy) management interfaces.
 
-_Pass-through management_ interfaces allows the use of the assigned management IP within the NOS VM, management traffic is transparently passed through to the VM, and the NOS configuration can accurately reflect the management IP. However, it is no longer possible to send or receive traffic directly in the vrnetlab container (e.g. for installing additional packages within the container).
+_Pass-through management_ interfaces allows the use of the assigned management IP within the NOS VM, management traffic is transparently passed through to the VM, and the NOS configuration can accurately reflect the management IP. However, it is no longer possible to send or receive traffic directly in the vrnetlab container (e.g. for installing additional packages within the container), other than to pre-defined exceptions, such as the QEMU serial port on TCP port 5000.
 
 NOSes defaulting to _pass-through_ management interfaces are:
 - All vJunos routers
