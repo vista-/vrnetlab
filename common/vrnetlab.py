@@ -117,11 +117,13 @@ class VM:
 
         # Populate management IP and gateway
         if self.mgmt_nic_passthrough:
-            self.mgmt_address_ipv4 = self.get_mgmt_address_ipv4()
-            self.mgmt_gw_ipv4 = self.get_mgmt_gw_ipv4()
+            self.mgmt_address_ipv4, self.mgmt_address_ipv6 = self.get_mgmt_address()
+            self.mgmt_gw_ipv4, self.mgmt_gw_ipv6 = self.get_mgmt_gw()
         else:
             self.mgmt_address_ipv4 = "10.0.0.15/24"
+            self.mgmt_address_ipv6 = None
             self.mgmt_gw_ipv4 = "10.0.0.2"
+            self.mgmt_gw_ipv6 = None
 
         self.insuffucient_nics = False
         self.min_nics = 0
@@ -376,30 +378,46 @@ class VM:
             )
         return res
 
-    def get_mgmt_address_ipv4(self):
-        """ Returns the IPv4 address of the eth0 interface of the container"""
-        stdout, _ = run_command(["ip", "--json", "-4", "address", "show", "dev", "eth0"])
+    def get_mgmt_address(self):
+        """ Returns the IPv4 and IPv6 address of the eth0 interface of the container"""
+        stdout, _ = run_command(["ip", "--json", "address", "show", "dev", "eth0"])
         command_json = json.loads(stdout.decode('utf-8'))
-        try:
-            intf_addrinfo = command_json[0]['addr_info'][0]
-        except IndexError as e:
-            raise IndexError("No IP set on management interface eth0!") from e
-        mgmt_address = intf_addrinfo['local']
-        mgmt_prefixlen = intf_addrinfo['prefixlen']
-        mgmt_cidr = mgmt_address + '/' + str(mgmt_prefixlen)
+        intf_addrinfos = command_json[0]['addr_info']
 
-        return mgmt_cidr
+        mgmt_cidr_v4 = None
+        mgmt_cidr_v6 = None
+        for addrinfo in intf_addrinfos:
+            if addrinfo['family'] == 'inet' and addrinfo['scope'] == 'global':
+                mgmt_address_v4 = addrinfo['local']
+                mgmt_prefixlen_v4 = addrinfo['prefixlen']
+                mgmt_cidr_v4 = mgmt_address_v4 + '/' + str(mgmt_prefixlen_v4)
+            if addrinfo['family'] == 'inet6' and addrinfo['scope'] == 'global':
+                mgmt_address_v6 = addrinfo['local']
+                mgmt_prefixlen_v6 = addrinfo['prefixlen']
+                mgmt_cidr_v6 = mgmt_address_v6 + '/' + str(mgmt_prefixlen_v6)
 
-    def get_mgmt_gw_ipv4(self):
-        """ Returns the IPv4 default gateway of the container, used for generating the management default route"""
-        stdout, _ = run_command(["ip", "--json", "-4", "route", "show", "default"])
-        command_json = json.loads(stdout.decode('utf-8'))
+        if not mgmt_cidr_v4:
+            raise ValueError("No IPv4 address set on management interface eth0!")
+
+        return mgmt_cidr_v4, mgmt_cidr_v6
+
+    def get_mgmt_gw(self):
+        """ Returns the IPv4 and IPv6 default gateways of the container, used for generating the management default route"""
+        stdout_v4, _ = run_command(["ip", "--json", "-4", "route", "show", "default"])
+        command_json_v4 = json.loads(stdout_v4.decode('utf-8'))
         try:
-            mgmt_gw = command_json[0]['gateway']
+            mgmt_gw_v4 = command_json_v4[0]['gateway']
         except IndexError as e:
             raise IndexError("No default gateway route on management interface eth0!") from e
 
-        return mgmt_gw
+        stdout_v6, _ = run_command(["ip", "--json", "-6", "route", "show", "default"])
+        command_json_v6 = json.loads(stdout_v6.decode('utf-8'))
+        try:
+            mgmt_gw_v6 = command_json_v6[0]['gateway']
+        except IndexError:
+            mgmt_gw_v6 = None
+
+        return mgmt_gw_v4, mgmt_gw_v6
 
     def nic_provision_delay(self) -> None:
         self.logger.debug(
