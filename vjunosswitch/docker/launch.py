@@ -64,6 +64,8 @@ class VJUNOSSWITCH_vm(vrnetlab.VM):
 
         cfg = cfg.replace("{MGMT_IP_IPV4}", self.mgmt_address_ipv4)
         cfg = cfg.replace("{MGMT_GW_IPV4}", self.mgmt_gw_ipv4)
+        cfg = cfg.replace("{MGMT_IP_IPV6}", self.mgmt_address_ipv6)
+        cfg = cfg.replace("{MGMT_GW_IPV6}", self.mgmt_gw_ipv6)
         cfg = cfg.replace("{HOSTNAME}", self.hostname)
 
         # write changes to init.conf file
