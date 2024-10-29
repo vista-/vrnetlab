@@ -121,9 +121,9 @@ class VM:
             self.mgmt_gw_ipv4, self.mgmt_gw_ipv6 = self.get_mgmt_gw()
         else:
             self.mgmt_address_ipv4 = "10.0.0.15/24"
-            self.mgmt_address_ipv6 = None
+            self.mgmt_address_ipv6 = "2001:db8::2/64"
             self.mgmt_gw_ipv4 = "10.0.0.2"
-            self.mgmt_gw_ipv6 = None
+            self.mgmt_gw_ipv6 = "2001:db8::1"
 
         self.insuffucient_nics = False
         self.min_nics = 0
