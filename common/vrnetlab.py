@@ -10,6 +10,7 @@ import re
 import subprocess
 import telnetlib
 import time
+import ipaddress
 from pathlib import Path
 
 MAX_RETRIES = 60
@@ -113,6 +114,22 @@ class VM:
         # if an image needs minimum amount of dataplane nics to bootup, specify
         if min_dp_nics:
             self.min_nics = min_dp_nics
+
+        # management subnet properties, defaults
+        self.mgmt_subnet    = "10.0.0.0/24"
+        self.mgmt_host_ip   = 2
+        self.mgmt_guest_ip  = 15
+
+        #  Default TCP ports forwarded (TODO tune per platform):
+        #  80    - http
+        #  443   - https
+        #  830   - netconf
+        #  6030  - gnmi/gnoi arista
+        #  8080  - sonic gnmi/gnoi, other http apis
+        #  9339  - iana gnmi/gnoi
+        #  32767 - gnmi/gnoi juniper
+        #  57400 - nokia gnmi/gnoi
+        self.mgmt_tcp_ports = [80,443,830,6030,8080,9339,32767,57400]
 
         # we setup pci bus by default
         self.provision_pci_bus = provision_pci_bus
@@ -294,9 +311,29 @@ class VM:
         os.chmod("/etc/tc-tap-ifup", 0o777)
 
     def gen_mgmt(self):
-        """Generate qemu args for the mgmt interface(s)"""
+        """Generate qemu args for the mgmt interface(s)
+        
+        Default TCP ports forwarded:
+          80    - http
+          443   - https
+          830   - netconf
+          6030  - gnmi/gnoi arista
+          8080  - sonic gnmi/gnoi, other http apis
+          9339  - iana gnmi/gnoi
+          32767 - gnmi/gnoi juniper
+          57400 - nokia gnmi/gnoi
+        """
+        if self.mgmt_host_ip+1>=self.mgmt_guest_ip:
+            self.logger.error("Guest IP (%s) must be at least 2 higher than host IP(%s)", 
+                              self.mgmt_guest_ip, self.mgmt_host_ip)
+
+        network = ipaddress.ip_network(self.mgmt_subnet)
+        host = str(network[self.mgmt_host_ip])
+        dns = str(network[self.mgmt_host_ip+1])
+        guest = str(network[self.mgmt_guest_ip])
+
         res = []
-        # mgmt interface is special - we use qemu user mode network
+        # mgmt interface is special - we use qemu user mode network with DHCP
         res.append("-device")
         mac = (
             "c0:00:01:00:ca:fe"
@@ -306,18 +343,11 @@ class VM:
         res.append(self.nic_type + f",netdev=p00,mac={mac}")
         res.append("-netdev")
         res.append(
-            "user,id=p00,net=10.0.0.0/24,"
-            "tftp=/tftpboot,"
-            "hostfwd=tcp:0.0.0.0:22-10.0.0.15:22,"  # ssh
-            "hostfwd=udp:0.0.0.0:161-10.0.0.15:161,"  # snmp
-            "hostfwd=tcp:0.0.0.0:830-10.0.0.15:830,"  # netconf
-            "hostfwd=tcp:0.0.0.0:80-10.0.0.15:80,"  # http
-            "hostfwd=tcp:0.0.0.0:443-10.0.0.15:443,"  # https
-            "hostfwd=tcp:0.0.0.0:9339-10.0.0.15:9339,"  # iana gnmi/gnoi
-            "hostfwd=tcp:0.0.0.0:57400-10.0.0.15:57400,"  # nokia gnmi/gnoi
-            "hostfwd=tcp:0.0.0.0:6030-10.0.0.15:6030,"  # gnmi/gnoi arista
-            "hostfwd=tcp:0.0.0.0:32767-10.0.0.15:32767,"  # gnmi/gnoi juniper
-            "hostfwd=tcp:0.0.0.0:8080-10.0.0.15:8080"  # sonic gnmi/gnoi, other http apis
+            f"user,id=p00,net={self.mgmt_subnet},host={host},dns={dns},dhcpstart={guest}," +
+            f"hostfwd=tcp:0.0.0.0:22-{guest}:22," +   # ssh
+            f"hostfwd=udp:0.0.0.0:161-{guest}:161," +  # snmp
+            (",".join([ f"hostfwd=tcp:0.0.0.0:{p}-{guest}:{p}" for p in self.mgmt_tcp_ports ])) +
+            ",tftp=/tftpboot"
         )
         return res
 
@@ -496,7 +526,7 @@ class VM:
         self.stop()
         self.start()
 
-    def wait_write(self, cmd, wait="__defaultpattern__", con=None, clean_buffer=False):
+    def wait_write(self, cmd, wait="__defaultpattern__", con=None, clean_buffer=False, hold=""):
         """Wait for something on the serial port and then send command
 
         Defaults to using self.tn as connection but this can be overridden
@@ -517,6 +547,12 @@ class VM:
                 wait = self.wait_pattern
             self.logger.trace(f"waiting for '{wait}' on {con_name}")
             res = con.read_until(wait.encode())
+
+            while (hold and (hold in res.decode())):
+                self.logger.trace(f"Holding pattern '{hold}' detected: {res.decode()}, retrying in 10s...")
+                con.write("\r".encode())
+                time.sleep(10)
+                res = con.read_until(wait.encode())
 
             cleaned_buf = (
                 (con.read_very_eager()) if clean_buffer else None

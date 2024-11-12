@@ -6,6 +6,7 @@ import os
 import re
 import signal
 import sys
+import ipaddress
 
 import vrnetlab
 
@@ -80,14 +81,22 @@ class FTOS_vm(vrnetlab.VM):
     def gen_mgmt(self):
         """
         Augment the parent class function to add gRPC port forwarding
+
+        TCP ports forwarded:
+        443 - OS10 REST API
+        830 - Netconf
         """
+        self.mgmt_subnet = "169.254.127.0/24"
+        self.mgmt_tcp_ports = [443,830]
         # call parent function to generate the mgmt interface
         res = super(FTOS_vm, self).gen_mgmt()
 
         # append gRPC forwarding if it was not added by common lib. confirm gNMI agent port number, default port is different than 50051?
         # gRPC Network Management Interface agent requires the switch in non default SmartFabric switch-operating-mode
-        if "hostfwd=tcp::50051-10.0.0.15:50051" not in res[-1]:
-            res[-1] = res[-1] + ",hostfwd=tcp::17051-10.0.0.15:50051"
+        network = ipaddress.ip_network(self.mgmt_subnet)
+        guest = str(network[self.mgmt_guest_ip])
+        if f"hostfwd=tcp::50051-{guest}:50051" not in res[-1]:
+            res[-1] = res[-1] + f",hostfwd=tcp::17051-{guest}:50051"
             vrnetlab.run_command(
                 ["socat", "TCP-LISTEN:50051,fork", "TCP:127.0.0.1:17051"],
                 background=True,
@@ -111,9 +120,7 @@ class FTOS_vm(vrnetlab.VM):
                 except IndexError as exc:
                     self.logger.error("no more credentials to try")
                     return
-                self.logger.debug(
-                    "trying to log in with %s / %s" % (username, password)
-                )
+                self.logger.debug("trying to log in with %s / %s", username, password)
                 self.wait_write(username, wait=None)
                 self.wait_write(password, wait="Password:")
 
@@ -124,7 +131,7 @@ class FTOS_vm(vrnetlab.VM):
                 self.tn.close()
                 # startup time?
                 startup_time = datetime.datetime.now() - self.start_time
-                self.logger.info("Startup complete in: %s" % startup_time)
+                self.logger.info("Startup complete in: %s", startup_time)
                 # mark as running
                 self.running = True
                 return
@@ -132,7 +139,7 @@ class FTOS_vm(vrnetlab.VM):
         # no match, if we saw some output from the router it's probably
         # booting, so let's give it some more time
         if res != b"":
-            self.logger.trace("OUTPUT: %s" % res.decode())
+            self.logger.trace("OUTPUT: %s", res.decode())
             # reset spins if we saw some output
             self.spins = 0
 
@@ -144,20 +151,14 @@ class FTOS_vm(vrnetlab.VM):
         """Do the actual bootstrap config"""
         self.logger.info("applying bootstrap configuration once system is ready")
         self.wait_write("", None)
-        self.wait_write("configure", wait="OS10#")
+        self.wait_write("configure", wait="OS10#", hold="loading-OS10#")
         self.wait_write(f"hostname {self.hostname}")
         self.wait_write("service simple-password")
         self.wait_write(
             f"username {self.username} password {self.password} role sysadmin priv-lv 15"
         )
 
-        # configure mgmt interface
-        self.wait_write("interface mgmt 1/1/1")
-        self.wait_write("no ip address dhcp")
-        self.wait_write("ip address 10.0.0.15/24")
-        self.wait_write("exit")
-        self.wait_write("management route 0.0.0.0/0 10.0.0.2")
-        self.wait_write("exit")
+        # No need to reconfigure mgmt IP; causes issues with parallel Netlab provisioning
         self.wait_write("copy running-configuration startup-configuration")
         self.wait_write("")
 
@@ -165,16 +166,16 @@ class FTOS_vm(vrnetlab.VM):
         """Load additional config provided by user."""
 
         if not os.path.exists(STARTUP_CONFIG_FILE):
-            self.logger.trace(f"Startup config file {STARTUP_CONFIG_FILE} is not found")
+            self.logger.trace("Startup config file %s is not found", STARTUP_CONFIG_FILE)
             return
 
-        self.logger.trace(f"Startup config file {STARTUP_CONFIG_FILE} exists")
+        self.logger.trace("Startup config file %s exists", STARTUP_CONFIG_FILE)
         with open(STARTUP_CONFIG_FILE) as file:
             config_lines = file.readlines()
             config_lines = [line.rstrip() for line in config_lines]
-            self.logger.trace(f"Parsed startup config file {STARTUP_CONFIG_FILE}")
+            self.logger.trace("Parsed startup config file %s", STARTUP_CONFIG_FILE)
 
-        self.logger.info(f"Writing lines from {STARTUP_CONFIG_FILE}")
+        self.logger.info("Writing lines from %s", STARTUP_CONFIG_FILE)
 
         self.wait_write("configure terminal")
         # Apply lines from file
