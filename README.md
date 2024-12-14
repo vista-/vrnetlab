@@ -11,7 +11,7 @@ project itself, consider reading the [docs of the upstream repo](https://github.
 ## What is this fork about?
 
 At [containerlab](https://containerlab.srlinux.dev) we needed to have
-[a way to run virtual routers](https://containerlab.srlinux.dev/manual/vrnetlab/)
+[a way to run virtual routers](https://containerlab.dev/manual/vrnetlab/)
 alongside the containerized Network Operating Systems.
 
 Vrnetlab provides perfect machinery to package most-common routing VMs in
@@ -79,6 +79,24 @@ Full list of connection mode values:
 | bridge          | :last_quarter_moon: | No additional kernel modules and has native qemu/libvirt support. Does not support passing STP. Requires restricting `MAC_PAUSE` frames in order to support LACP.
 | ovs-bridge      | :white_check_mark:  | Same as a regular bridge, but uses OvS (Open vSwitch).
 | macvtap         | :x:                 | Requires mounting entire `/dev` to a container namespace. Needs file descriptor manipulation due to no native qemu support.
+
+## Management interface
+
+There are two types of management connectivity for NOS VMs: _pass-through_ and _host-forwarded_ (legacy) management interfaces.
+
+_Pass-through management_ interfaces allows the use of the assigned management IP within the NOS VM, management traffic is transparently passed through to the VM, and the NOS configuration can accurately reflect the management IP. However, it is no longer possible to send or receive traffic directly in the vrnetlab container (e.g. for installing additional packages within the container), other than to pre-defined exceptions, such as the QEMU serial port on TCP port 5000.
+
+NOSes defaulting to _pass-through_ management interfaces are:
+
+* None so far, we are gathering feedback on this, and will update this list as feedback is received. Please contact us in [Discord](https://discord.gg/vAyddtaEV9) or open up an issue here if you have found any issues when trying the passthrough mode.
+
+In case of _host-forwarded_ management interfaces, certain ports are forwarded to the NOS VM IP, which is always 10.0.0.15/24. The management gateway in this case is 10.0.0.2/24, and outgoing traffic is NATed to the container management IP. This management interface connection mode does not allow for traffic such as LLDP to pass through the management interface.
+
+NOSes defaulting to _host-forwarded_ management interfaces are:
+
+* all current systems
+
+It is possible to change from the default management interface mode by setting the `CLAB_MGMT_PASSTHROUGH` environment variable to 'true' or 'false', however, it is left up to the user to provide a startup configuration compatible with the requested mode.
 
 ## Which vrnetlab routers are supported?
 
