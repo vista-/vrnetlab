@@ -825,6 +825,24 @@ class VR:
                 else:
                     self.update_health(1, "starting")
 
+            #file-based signalling backdoor to trigger a system reset (via qemu-monitor) on all or specific VMs.
+            #if file is empty: reset whole VR (all VMs)
+            #if file is non-empty: reset only specified VMs (comma separated list)
+            if os.path.exists('/reset'):
+                with open('/reset','rt') as f:
+                    fcontent=f.read().strip()
+                vm_num_list=fcontent.split(',')
+                for vm in self.vms:
+                    if (str(vm.num) in vm_num_list) or not fcontent:
+                        try:
+                            vm.qm.write("system_reset\r".encode())
+                            self.logger.debug(f"Sent qemu-monitor system_reset to VM num {vm.num} ")
+                        except Exception as e:
+                            self.logger.debug(f"Failed to send qemu-monitor system_reset to VM num {vm.num} ({e})")
+                try:
+                    os.remove('/reset')
+                except Exception as e:
+                    self.logger.debug(f"Failed to cleanup /reset file({e}). qemu-monitor system_reset will likely be triggered again on VMs")
 
 class QemuBroken(Exception):
     """Our Qemu instance is somehow broken"""
