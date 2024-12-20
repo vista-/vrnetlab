@@ -179,8 +179,8 @@ class cat9kv_vm(vrnetlab.VM):
         self.wait_write("ipv6 unicast-routing")
 
         # add mgmt vrf static route
-        self.wait_write(f"ip route vrf clab-mgmt 0.0.0.0 0.0.0.0 {self.mgmt_gw_ipv4}")
-        self.wait_write(f"ipv6 route vrf clab-mgmt ::/0 {self.mgmt_gw_ipv6}")
+        self.wait_write(f"ip route vrf Mgmt-vrf 0.0.0.0 0.0.0.0 {self.mgmt_gw_ipv4}")
+        self.wait_write(f"ipv6 route vrf Mgmt-vrf ::/0 {self.mgmt_gw_ipv6}")
 
         self.wait_write("interface GigabitEthernet0/0")
         self.wait_write(f"ip address {v4_mgmt_address[0]} {v4_mgmt_address[1]}")
