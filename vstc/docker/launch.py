@@ -77,25 +77,35 @@ class STC_vm(vrnetlab.VM):
             
         return
     
-    def bootstrap_config(self):        
+    def bootstrap_config(self):
+        
+        config = ""
+        
+        if self.mgmt_address_ipv4 != "dhcp" and self.mgmt_address_ipv4 is not None:
+            v4_mgmt_address = vrnetlab.cidr_to_ddn(self.mgmt_address_ipv4)
+            config += f"""mode static
+ipaddress {v4_mgmt_address[0]}
+netmask {v4_mgmt_address[1]}
+gwaddress {self.mgmt_gw_ipv4}
+            """
+            
+        if self.mgmt_address_ipv6 != "dhcp" and self.mgmt_address_ipv6 is not None:
+            v6_mgmt_address = self.mgmt_address_ipv6.split("/")
+            config += f"""ipv6mode static
+ipv6address {v6_mgmt_address[0]}
+ipv6prefixlen {v6_mgmt_address[1]}
+ipv6gwaddress {self.mgmt_gw_ipv6}
+            """
+        
+        if not config: 
+            return
+        
         # login
         self.wait_write("admin", "")
         self.wait_write("spt_admin", "Password:")
         
-        v4_mgmt_address = vrnetlab.cidr_to_ddn(self.mgmt_address_ipv4)
-        v6_mgmt_address = self.mgmt_address_ipv6.split("/")
-        
-        # configure
-        self.wait_write("mode static")
-        self.wait_write("ipv6mode static")
-        
-        self.wait_write(f"ipaddress {v4_mgmt_address[0]}")
-        self.wait_write(f"netmask {v4_mgmt_address[1]}")
-        self.wait_write(f"gwaddress {self.mgmt_gw_ipv4}")
-        
-        self.wait_write(f"ipv6address {v6_mgmt_address[0]}")
-        self.wait_write(f"ipv6prefixlen {v6_mgmt_address[1]}")
-        self.wait_write(f"ipv6gwaddress {self.mgmt_gw_ipv6}")
+        for line in config.splitlines():
+            self.wait_write(line)
         
         self.wait_write("activate")
         self.wait_write("reboot")
