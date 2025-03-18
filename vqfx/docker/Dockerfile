@@ -7,3 +7,5 @@ COPY $RE_IMAGE /
 COPY $PFE_IMAGE /
 
 COPY *.py /
+COPY init.conf /
+COPY make-config.sh /

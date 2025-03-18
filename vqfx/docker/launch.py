@@ -6,6 +6,7 @@ import os
 import re
 import signal
 import sys
+import subprocess
 
 import vrnetlab
 
@@ -55,6 +56,34 @@ class VQFX_vcp(vrnetlab.VM):
         # the value from the env var.
         self._version = version
 
+        with open("init.conf", "r") as file:
+            cfg = file.read()
+
+        cfg = cfg.replace("{MGMT_IP_IPV4}", self.mgmt_address_ipv4)
+        cfg = cfg.replace("{MGMT_GW_IPV4}", self.mgmt_gw_ipv4)
+        cfg = cfg.replace("{MGMT_IP_IPV6}", self.mgmt_address_ipv6)
+        cfg = cfg.replace("{MGMT_GW_IPV6}", self.mgmt_gw_ipv6)
+        cfg = cfg.replace("{HOSTNAME}", self.hostname)
+
+        with open("init.conf", "w") as file:
+            cfg = file.write(cfg)
+
+        self.startup_config()
+
+        # extend QEMU args with USB controller
+        # we can't use xhci as vQFX does not support it
+        self.qemu_args.extend(["-usb"])
+
+        # mount config disk with juniper.conf base configs
+        self.qemu_args.extend(
+            [
+                "-drive",
+                "file=/config.img,format=raw,if=none,id=config_disk",
+                "-device",
+                "usb-storage,drive=config_disk,id=usb-disk0,removable=off,write-cache=on",
+            ]
+        )
+
     def start(self):
         # use parent class start() function
         super(VQFX_vcp, self).start()
@@ -98,11 +127,8 @@ class VQFX_vcp(vrnetlab.VM):
             self.spins = 0
             return
 
-        # logged_in_prompt prompt for v20+ versions
-        logged_in_prompt = b"root@:RE:0%"
-
-        if self._version["major"] < 20:
-            logged_in_prompt = b"root@vqfx-re:RE:0%"
+        # logged_in_prompt prompt
+        logged_in_prompt = f"root@{self.hostname}:RE:0%".encode('utf-8')
 
         (ridx, match, res) = self.con_expect([b"login:", logged_in_prompt])
         if match:  # got a match!
@@ -110,13 +136,9 @@ class VQFX_vcp(vrnetlab.VM):
                 self.logger.info("matched login prompt")
                 self.wait_write("root", wait=None)
 
-                # v19 has Juniper password for root login
-                if self._version["major"] < 20:
-                    self.wait_write("Juniper", wait="Password:")
+                self.wait_write("admin@123", wait="Password:")
             if ridx == 1:
                 # run main config!
-                self.bootstrap_config()
-                self.startup_config()
                 self.running = True
                 self.scrapli_tn.close()
                 # calc startup time
@@ -134,56 +156,26 @@ class VQFX_vcp(vrnetlab.VM):
 
         self.spins += 1
 
-    def bootstrap_config(self):
-        """Do the actual bootstrap config"""
-        self.wait_write("cli", None)
-        self.wait_write("set cli screen-length 0", ">", 10)
-        self.wait_write("set cli screen-width 511", ">", 10)
-        self.wait_write("set cli complete-on-space off", ">", 10)
-        self.wait_write("configure", ">", 10)
-        self.wait_write("set system services ssh")
-        self.wait_write("set system services netconf ssh")
-        self.wait_write("set system services netconf rfc-compliant")
-        self.wait_write("delete system login user vagrant")
-        self.wait_write(
-            "set system login user %s class super-user authentication plain-text-password"
-            % self.username
-        )
-        self.wait_write(self.password, "New password:")
-        self.wait_write(self.password, "Retype new password:")
-        self.wait_write("set system root-authentication plain-text-password")
-        self.wait_write(self.password, "New password:")
-        self.wait_write(self.password, "Retype new password:")
-        self.wait_write("delete interfaces")
-        self.wait_write("set interfaces em0 unit 0 family inet address 10.0.0.15/24")
-        self.wait_write("set interfaces em1 unit 0 family inet address 169.254.0.2/24")
-        self.wait_write(f"set system host-name {self.hostname}")
-        self.wait_write("commit")
-        self.wait_write("exit")
-
     def startup_config(self):
-        """Load additional config provided by user."""
+        """Load additional config provided by user and append initial
+        configurations set by vrnetlab."""
+        # if startup cfg DNE
+        if not os.path.exists(STARTUP_CONFIG_FILE):
+            self.logger.trace(f"Startup config file {STARTUP_CONFIG_FILE} is not found")
+            # rename init.conf to juniper.conf, this is our startup config
+            os.rename("init.conf", "juniper.conf")
 
-        if os.path.exists(STARTUP_CONFIG_FILE):
-            self.logger.trace("Config File %s exists" % STARTUP_CONFIG_FILE)
-            with open(STARTUP_CONFIG_FILE) as file:
-                self.logger.trace("Opening Config File %s" % STARTUP_CONFIG_FILE)
-                config_lines = file.readlines()
-                config_lines = [line.rstrip() for line in config_lines]
-                self.logger.trace("Parsed Config File %s" % STARTUP_CONFIG_FILE)
+        # if startup cfg file is found
+        else:
+            self.logger.trace(
+                f"Startup config file {STARTUP_CONFIG_FILE} found, appending initial configuration"
+            )
+            # append startup cfg to inital configuration
+            append_cfg = f"cat init.conf {STARTUP_CONFIG_FILE} >> juniper.conf"
+            subprocess.run(append_cfg, shell=True)
 
-            self.logger.info("Writing lines from %s" % STARTUP_CONFIG_FILE)
-            # Enter Config Mode on QFX
-            self.wait_write("cli", None)
-            self.wait_write("configure", ">", 10)
-            # Appline lines from file
-            for line in config_lines:
-                self.wait_write(line)
-            # Commit and GTFO
-            self.wait_write("commit")
-            self.wait_write("exit")
-
-            self.logger.info("Done loading config file %s" % STARTUP_CONFIG_FILE)
+        # generate mountable config disk based on juniper.conf file with base vrnetlab configs
+        subprocess.run(["./make-config.sh", "juniper.conf", "config.img"], check=True)
 
 
 class VQFX_vpfe(vrnetlab.VM):
