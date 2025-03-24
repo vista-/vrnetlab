@@ -95,7 +95,8 @@ class VJUNOSSWITCH_vm(vrnetlab.VM):
 
         self.qemu_args.extend(["-no-user-config", "-nodefaults", "-boot", "strict=on"])
         self.nic_type = "virtio-net-pci"
-        self.num_nics = 11
+        # 1 management port + 48 front ports + 8 uplink ports to match most dense 1U Juniper switch
+        self.num_nics = 57
         self.smbios = ["type=1,product=VM-VEX"]
         self.conn_mode = conn_mode
 
